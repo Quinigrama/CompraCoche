@@ -1,5 +1,7 @@
 {
   "name": "Calculadora de Coste de Vehículo",
   "description": "Una aplicación para ayudarte a decidir qué tipo de coche comprar (híbrido, gasolina, GLP, diésel) analizando tus rutas habituales, los costes de combustible y el precio de compra, para encontrar la opción más económica a largo plazo.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

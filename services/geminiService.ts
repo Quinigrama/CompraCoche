@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { CalculationResult, FuelConsumptionData } from '../types';
 
@@ -51,10 +50,48 @@ Devuelve solo el objeto JSON.`;
   }
 }
 
-export async function getRecommendation(results: CalculationResult[]): Promise<string> {
+export async function getRouteDetails(homeAddress: string, workAddress: string): Promise<{ distance: number; cityPercentage: number }> {
+    const prompt = `Calcula la distancia de conducción más corta en kilómetros entre la siguiente dirección de origen y destino. Además, estima el porcentaje del trayecto que transcurre por ciudad/vías urbanas.
+
+Origen: "${homeAddress}"
+Destino: "${workAddress}"
+
+Devuelve únicamente un objeto JSON con dos claves: "distance" (un número para los kilómetros totales del trayecto de ida) y "cityPercentage" (un número entre 0 y 100 para el porcentaje de ciudad).`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    distance: { type: Type.NUMBER, description: "Distancia total en kilómetros." },
+                    cityPercentage: { type: Type.NUMBER, description: "Porcentaje del trayecto en ciudad (0-100)." }
+                },
+                required: ["distance", "cityPercentage"]
+            }
+        }
+    });
+
+    try {
+        const jsonText = response.text.trim();
+        const data = JSON.parse(jsonText);
+        if (typeof data.distance !== 'number' || typeof data.cityPercentage !== 'number') {
+            throw new Error("Invalid data structure from Gemini.");
+        }
+        return data;
+    } catch (error) {
+        console.error("Error parsing Gemini route response:", error);
+        throw new Error("No se pudo calcular la ruta. Por favor, introduce los datos manualmente.");
+    }
+}
+
+
+export async function getRecommendation(results: CalculationResult[], years: number): Promise<string> {
     const bestOption = results.reduce((prev, current) => (prev.totalCost < current.totalCost) ? prev : current);
 
-    const prompt = `Actúa como un asesor experto en compra de vehículos. Basado en los siguientes resultados de cálculo para un periodo de ${results[0].annualKm > 0 ? results[0].purchasePrice / (bestOption.annualFuelCost || 1) : 'varios'} años, escribe una recomendación breve, amigable y útil en español.
+    const prompt = `Actúa como un asesor experto en compra de vehículos. Basado en los siguientes resultados de cálculo para un periodo de ${years} años, escribe una recomendación breve, amigable y útil en español.
 
 Datos:
 ${results.map(r => 

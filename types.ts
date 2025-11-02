@@ -1,9 +1,7 @@
-
 export interface UserInput {
-  weekdayCity: number;
-  weekdayHighway: number;
-  weekendCity: number;
-  weekendHighway: number;
+  weekdayCommuteKm: number;
+  weekendTripKm: number;
+  estimatedAnnualKm: number;
   priceGasoline: number;
   priceDiesel: number;
   priceLPG: number;
